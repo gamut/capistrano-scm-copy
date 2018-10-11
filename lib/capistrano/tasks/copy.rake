@@ -11,10 +11,17 @@ namespace :copy do
 
   tar_verbose = fetch(:tar_verbose, true) ? "v" : ""
 
-  is_git_repo = File.exist?(".git")
+  git_repos = Dir.glob "**/.git"
+
   desc "Archive files to #{archive_name}"
-  if is_git_repo
-    file_list =  FileList.new(`git ls-files --exclude-standard`.split("\n"))
+  if git_repos.any?
+    file_array = Dir.glob("**/.git").map do |git_path|
+      repo_path = File.dirname git_path
+      `git --git-dir "#{git_path}" ls-files --exclude-standard`.split("\n").map do |git_file|
+        File.join repo_path, git_file
+      end
+    end
+    file_list =  FileList.new(file_array)
   else
     file_list = FileList[include_dir]
   end
