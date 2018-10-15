@@ -3,6 +3,7 @@ namespace :copy do
   archive_name = "archive.tar.gz"
   include_dir  = fetch(:include_dir) || "*"
   exclude_dir  = Array(fetch(:exclude_dir))
+  limit_to_git = fetch(:limit_to_git) || false
 
   exclude_args = exclude_dir.map { |dir| "--exclude '#{dir}'"}
 
@@ -11,7 +12,7 @@ namespace :copy do
 
   tar_verbose = fetch(:tar_verbose, true) ? "v" : ""
 
-  git_repos = Dir.glob "**/.git"
+  git_repos = limit_to_git ? Dir.glob("**/.git") : []
 
   desc "Archive files to #{archive_name}"
   if git_repos.any?
@@ -27,7 +28,7 @@ namespace :copy do
   end
 
   file archive_name => file_list.exclude(archive_name) do |t|
-    cmd = ["tar -c#{tar_verbose}zf #{t.name}", *exclude_args, *t.prerequisites]
+    cmd = ["tar -ch#{tar_verbose}zf #{t.name}", *exclude_args, *t.prerequisites]
     sh cmd.join(' ')
   end
 
